@@ -1,4 +1,4 @@
-baseURL = "https://www.idontfixcomputers.com/"
+baseURL = "http://www.idontfixcomputers.com/"
 languageCode = "en-us"
 title = "I don't fix computers."
 theme = "idontthemewebsites"
