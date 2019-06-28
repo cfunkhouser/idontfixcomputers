@@ -1,0 +1,21 @@
+baseURL = "https://vast-garden-32788.herokuapp.com/"
+languageCode = "en-us"
+title = "I don't fix computers."
+theme = "idontthemewebsites"
+
+[params]
+whoami = "Christian Funkhouser"
+
+highlight = true
+highlightStyle = "monokai-sublime"
+highlightLanguages = ["go", "python", "shell", "console", "ruby", "javascript"]
+
+[[menu.main]]
+    url = "/thing/"
+    name = "Things"
+    weight = 2
+
+[[menu.main]]
+    url = "https://github.com/cfunkhouser"
+    name = "Code"
+    weight = 1
