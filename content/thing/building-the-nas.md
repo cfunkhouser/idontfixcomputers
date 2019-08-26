@@ -1,10 +1,11 @@
 ---
-title: "Building the NAS"
+title: "Home-built NAS (deprecated)"
 date: 2016-07-25T14:53:45-04:00
 draft: false
 tags: ["nas", "home lab"]
 ---
-# Home-Built NAS
+
+Note: This document was never finished. I'm also no longer using this NAS.
 
 ## Install Debian 8
 
