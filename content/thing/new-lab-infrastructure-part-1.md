@@ -35,16 +35,18 @@ resolver.
 
 ## Installing SAMBA 4
 
-This section heavily references [the SAMBA Wiki
+The starting point for this exercise is a fresh installation of Debian Buster on
+the target hardware. I'll discuss the hardware elsewhere. It's not super
+impressive, but it'll do for all this. I closely follow [the SAMBA Wiki
 entry](https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller)
-for the same topic.
+for this exercise.
 
 It's worth noting here that the document refers to `/usr/local/samba/private` in
 many places, but this is not the location Debian Buster's packaged samba puts
 things. Instead, everything lives at `/var/lib/samba/private`.
 
 ```console
-$ sudo apt-get install \
+christian@pharoah$ sudo apt-get install \
     acl \
     attr \
     samba \
