@@ -1,28 +1,33 @@
 ---
-title: "Lab Domain Controller: Part 1"
+title: "New Lab Infrastructure: Part 1"
 date: 2019-11-29 13:17:32-05:00
 draft: false
 tags: ["domain controller", "home lab", "samba"]
 ---
 
-This describes my effort to configure a home samba 4 domain controller. It was
-written mainly for my own reference during the process and later, when I
-inevitably need to figure out WTF I did.
-
-The starting point is a base installation of Debian 10 Buster. The goal is a
-system which can:
-
-- Act as a Domain Controller for our lab's Windows 10 hosts
-- Serve authoritative DNS for our home network
-- Provide DHCP on our lab network, and register provisioned clients with DNS
-- Provide RADIUS authentication for our network
-- Serve as Kubernetes master for our lab cluster
+This describes my effort to configure new lab infrastructure. It was written
+mainly for my own reference during the process and later, when I inevitably need
+to figure out WTF I did. This part focuses on the Samba 4 Active Directory
+Domain Controller.
 
 ## Planning
+
+The eventual goal of this new infrastructure is:
+
+- Active Directory-compatible Domain Controller for our lab's Windows 10 hosts
+- Proper DNS, with reverse lookups
+- DHCP on our lab network which registers provisioned clients with DNS
+- RADIUS authentication for WiFi
+- FreeNAS fully integrated with the domain, hosting all storage (SMB/CIFS,
+  iSCSI, NFS)
+- A Kubernetes cluster with integrated authentication
+
+The details of the new network:
 
 - The domain: `home.funkhouse.rs`
 - DC hostname: `pharoah.home.funkhouse.rs`
 - DC static IP: `10.42.16.2/16`
+- The network: `10.42.0.0/16`
 
 The existing network uses a `dnsmasq` DNS server at 10.42.0.2. This will be
 deprecated after the domain is online. For the time, it will be the upstream DNS
@@ -660,12 +665,12 @@ Run through some sanity checks that the Wiki recommends. First, the file shares:
 
 ```console
 christian@pharoah:system$ sudo smbclient -L localhost -U christian
-Enter HOME\christian's password: 
+Enter HOME\christian's password:
 
         Sharename       Type      Comment
         ---------       ----      -------
-        netlogon        Disk      
-        sysvol          Disk      
+        netlogon        Disk
+        sysvol          Disk
         IPC$            IPC       IPC Service (Samba 4.9.5-Debian)
 Reconnecting with SMB1 for workgroup listing.
 
@@ -678,7 +683,7 @@ Reconnecting with SMB1 for workgroup listing.
 OK 30 Nov 2019 16:06:33 EST
 christian@pharoah:system$ smbclient //localhost/netlogon -Uchristian -c 'ls'
 Unable to initialize messaging context
-Enter HOME\christian's password: 
+Enter HOME\christian's password:
   .                                   D        0  Fri Nov 29 14:19:23 2019
   ..                                  D        0  Fri Nov 29 14:19:26 2019
 
