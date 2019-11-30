@@ -33,11 +33,11 @@ The existing network uses a `dnsmasq` DNS server at 10.42.0.2. This will be
 deprecated after the domain is online. For the time, it will be the upstream DNS
 resolver.
 
-## Installing SAMBA 4
+## Installing Samba 4
 
 The starting point for this exercise is a fresh installation of Debian Buster on
 the target hardware. I'll discuss the hardware elsewhere. It's not super
-impressive, but it'll do for all this. I closely follow [the SAMBA Wiki
+impressive, but it'll do for all this. I closely follow [the Samba Wiki
 entry](https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller)
 for this exercise.
 
@@ -46,7 +46,7 @@ many places, but this is not the location Debian Buster's packaged samba puts
 things. Instead, everything lives at `/var/lib/samba/private`.
 
 ```console
-christian@pharoah$ sudo apt-get install \
+$ sudo apt-get install \
     acl \
     attr \
     samba \
@@ -143,11 +143,11 @@ OK 29 Nov 2019 13:40:51 EST
 ```
 
 Between this and the linked Wiki article, it looks like I need to make sure I
-have BIND9 installed before I continue provisioning. Let's do that now.
+have BIND 9 installed before I continue provisioning. Let's do that now.
 
-## Installing BIND9
+## Installing BIND 9
 
-I've already got BIND9 installed, apparently. I probably did this early on in
+I've already got BIND 9 installed, apparently. I probably did this early on in
 installation. Oh well.
 
 ```console
@@ -165,9 +165,9 @@ OK 29 Nov 2019 13:49:15 EST
 
 ### Configuring it
 
-The documentation [concerning BIND9
+The documentation [concerning BIND 9
 backends](https://wiki.samba.org/index.php/BIND9_DLZ_DNS_Back_End#Configuring_the_BIND9_DLZ_Module)
-on the SAMBA Wiki describes how to configure BIND9 to load the DLZ module.
+on the Samba Wiki describes how to configure BIND 9 to load the DLZ module.
 However, the location listed in the documentation does not exist on Buster.
 Let's find it:
 
@@ -263,9 +263,9 @@ drwx------ 2 root root   4096 Nov 29 14:09 msg.sock
 OK 29 Nov 2019 14:11:29 EST
 ```
 
-Looks like a problem; BIND9 is now looking for a file which doesn't exist. This
+Looks like a problem; BIND 9 is now looking for a file which doesn't exist. This
 may be a tangled dependency issue, so I'm going to go back and provision the
-SAMBA domain and point it at BIND9. I'm hoping that creates the required file.
+Samba domain and point it at BIND 9. I'm hoping that creates the required file.
 
 ## Provisioning the Domain
 
@@ -365,7 +365,7 @@ OK 29 Nov 2019 14:19:29 EST
 
 Much better.
 
-### Trying BIND9 Again
+### Trying BIND 9 Again
 
 ```console
 christian@pharoah:bind$ sudo service bind9 start
@@ -401,7 +401,7 @@ point.
 ### Configuring System Resolver
 
 For the DC to work correctly, it must act as its own resolver. Because of our
-existing lab DNS infrastructure, we first must make sure BIND9 uses the existing
+existing lab DNS infrastructure, we first must make sure BIND 9 uses the existing
 DNS server as its upstream. We'll change this later, once everything else has
 been pointed at this DC. We're going to configure it as a forwarding server, in
 this case.
@@ -438,7 +438,7 @@ search home.funkhouse.rs
 nameserver 10.42.16.2
 ```
 
-Reload BIND9 to get it working, then do a quick sanity check:
+Reload BIND 9 to get it working, then do a quick sanity check:
 
 ```console
 christian@pharoah:bind$ sudo systemctl reload bind9
@@ -508,7 +508,7 @@ Fantastic.
 
 ### Fun with Reverse Zones
 
-Now we get a chance to see if our BIND9 / SAMBA integration is working by
+Now we get a chance to see if our BIND 9 / Samba integration is working by
 creating a reverse zone for our subnet. Our network is `10.42.0.0/16`, so we'll
 create a whole `/16` reverse zone:
 
