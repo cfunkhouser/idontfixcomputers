@@ -1,6 +1,8 @@
 ---
-title: "Lab Domain Controller++" date: 2019-11-29 13:17:32-05:00 draft: false
-tags: ["home lab"]
+title: "Lab Domain Controller: Part 1"
+date: 2019-11-29 13:17:32-05:00
+draft: false
+tags: ["domain controller", "home lab", "samba"]
 ---
 
 This describes my effort to configure a home samba 4 domain controller. It was
@@ -635,9 +637,11 @@ Warning: Your password will expire in 41 days on Sat 11 Jan 2020 01:40:24 PM EST
 OK 30 Nov 2019 14:19:49 EST
 ```
 
-Note: I had changed the password for `HOME\Administrator` before I did this, but
-did not capture the output. I used `sudo samba-tool user setpassword
-Administrator` to do it.
+I had changed the password for `HOME\Administrator` before I did this, but did
+not capture the output. I used `sudo samba-tool user setpassword Administrator`
+to do it.
+
+Also, gonna have to do something about that 41 days shenanigans. That won't do.
 
 ### Fun with Reverse Zones Redux
 
@@ -650,3 +654,63 @@ Zone 42.10.in-addr.arpa created successfully
 OK 30 Nov 2019 14:22:40 EST
 ```
 
+## Testing Samba
+
+Run through some sanity checks that the Wiki recommends. First, the file shares:
+
+```console
+christian@pharoah:system$ sudo smbclient -L localhost -U christian
+Enter HOME\christian's password: 
+
+        Sharename       Type      Comment
+        ---------       ----      -------
+        netlogon        Disk      
+        sysvol          Disk      
+        IPC$            IPC       IPC Service (Samba 4.9.5-Debian)
+Reconnecting with SMB1 for workgroup listing.
+
+        Server               Comment
+        ---------            -------
+
+        Workgroup            Master
+        ---------            -------
+        WORKGROUP            PHAROAH
+OK 30 Nov 2019 16:06:33 EST
+christian@pharoah:system$ smbclient //localhost/netlogon -Uchristian -c 'ls'
+Unable to initialize messaging context
+Enter HOME\christian's password: 
+  .                                   D        0  Fri Nov 29 14:19:23 2019
+  ..                                  D        0  Fri Nov 29 14:19:26 2019
+
+                948004776 blocks of size 1024. 897420696 blocks available
+OK 30 Nov 2019 16:07:13 EST
+```
+
+That annoying `Unable to initialize messaging context` error is a known bug that
+was fixed upstream: https://bugzilla.samba.org/show_bug.cgi?id=13925
+
+Some `SRV` and `A` record verification:
+
+```console
+OK 30 Nov 2019 16:07:13 EST
+christian@pharoah:system$ host -t SRV _ldap._tcp.home.funkhouse.rs
+_ldap._tcp.home.funkhouse.rs has SRV record 0 100 389 pharoah.home.funkhouse.rs.
+OK 30 Nov 2019 16:08:45 EST
+christian@pharoah:system$ host -t SRV _kerberos._udp.home.funkhouse.rs
+_kerberos._udp.home.funkhouse.rs has SRV record 0 100 88 pharoah.home.funkhouse.rs.
+OK 30 Nov 2019 16:08:57 EST
+christian@pharoah:system$ host -t A pharoah.home.funkhouse.rs
+pharoah.home.funkhouse.rs has address 10.42.16.2
+OK 30 Nov 2019 16:09:12 EST
+```
+
+Seems like all of that makes sense.
+
+## Postscript
+
+The install went relatively smoothly, to be honest. A few hiccups revolving
+around operations orders, and some strangeness about how Debian packages Samba.
+None of this was a show-stopper.
+
+Next up: Configuring FreeNAS to work with this DC, so shares can live somewhere
+provisioned for actual storage.
