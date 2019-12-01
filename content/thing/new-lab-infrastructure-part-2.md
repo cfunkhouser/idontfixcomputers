@@ -44,7 +44,6 @@ assign it to the role.
 
 ![Assigning the Twiddler role to the new account](gcp-user-create-2.png)
 
-
 Finally, I created a key for this service account and downloaded the JSON file.
 This file I placed at
 `/var/lib/letsencrypt/pharoah-cert-renewer-credentials.json`, owned by `root`,
@@ -127,3 +126,159 @@ OK 01 Dec 2019 09:47:38 EST
 ```
 
 Not too shabby!
+
+### Configuring Samba
+
+Now that we have certificates, let's toss them at Samba. First, we need to copy
+the crypto material into the Samba TLS directory to avoid mucking with the perms
+under `/etc/letsencrypt`.
+
+```console
+christian@pharoah:~$ sudo rm /var/lib/samba/private/tls/*.pem
+OK 01 Dec 2019 11:03:46 EST
+christian@pharoah:~$ sudo cp -L \
+>  /etc/letsencrypt/live/pharoah.funkhouse.rs/{cert,chain,privkey}.pem \
+>  /var/lib/samba/private/tls/
+OK 01 Dec 2019 11:04:01 EST
+christian@pharoah:~$ ls -l /var/lib/samba/private/tls/
+total 20
+-rw-r--r-- 1 root root 1923 Dec  1 11:04 cert.pem
+-rw-r--r-- 1 root root 1647 Dec  1 11:04 chain.pem
+-rw------- 1 root root 1704 Dec  1 11:04 privkey.pem
+OK 01 Dec 2019 11:04:12 EST
+```
+
+Crack open `/etc/samab/smb.conf` and add the following section:
+
+```text
+tls enabled  = yes
+tls keyfile  = tls/privkey.pem
+tls certfile = tls/cert.pem
+tls cafile   = tls/chain.pem
+```
+
+Then restart Samba, and see how it likes those values.
+
+```console
+christian@pharoah:~$ sudo systemctl restart samba-ad-dc
+OK 01 Dec 2019 13:43:09 EST
+christian@pharoah:~$ sudo systemctl status samba-ad-dc
+● samba-ad-dc.service - Samba AD Daemon
+   Loaded: loaded (/lib/systemd/system/samba-ad-dc.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2019-12-01 13:43:09 EST; 5s ago
+... trimmed ...
+OK 01 Dec 2019 13:43:14 EST
+```
+
+Well, that's promising. Now let's get a look at that certificate. Samba serves
+LDAPS on port 636, so we'll point `openssl` at it.
+
+```console
+christian@pharoah:~$ echo -n | openssl s_client -connect 10.42.16.2:636 | sed -ne '/-END CERTIFICATE-/,/DONE/p'
+Can't use SSL_get_servername
+depth=0 CN = pharoah.funkhouse.rs
+verify error:num=20:unable to get local issuer certificate
+verify return:1
+depth=0 CN = pharoah.funkhouse.rs
+verify error:num=21:unable to verify the first certificate
+verify return:1
+DONE
+-----END CERTIFICATE-----
+subject=CN = pharoah.funkhouse.rs
+
+issuer=C = US, O = Let's Encrypt, CN = Let's Encrypt Authority X3
+
+---
+Acceptable client certificate CA names
+C = US, O = Let's Encrypt, CN = Let's Encrypt Authority X3
+Requested Signature Algorithms: RSA+SHA256:RSA-PSS+SHA256:RSA-PSS+SHA256:ECDSA+SHA256:Ed25519:RSA+SHA384:RSA-PSS+SHA384:RSA-PSS+SHA384:ECDSA+SHA384:RSA+SHA512:RSA-PSS+SHA512:RSA-PSS+SHA512:ECDSA+SHA512:RSA+SHA1:ECDSA+SHA1
+Shared Requested Signature Algorithms: RSA+SHA256:RSA-PSS+SHA256:RSA-PSS+SHA256:ECDSA+SHA256:Ed25519:RSA+SHA384:RSA-PSS+SHA384:RSA-PSS+SHA384:ECDSA+SHA384:RSA+SHA512:RSA-PSS+SHA512:RSA-PSS+SHA512:ECDSA+SHA512
+Peer signing digest: SHA256
+Peer signature type: RSA-PSS
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 2085 bytes and written 393 bytes
+Verification error: unable to verify the first certificate
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 2048 bit
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+Early data was not sent
+Verify return code: 21 (unable to verify the first certificate)
+---
+OK 01 Dec 2019 13:48:46 EST
+```
+
+Awwww yeah. Looks like it worked. Now that we're sure Samba will serve traffic
+using the Let's Encrypt certificates, let's try to get it working with the
+symlinks to the certificate files so we can use automatic renewal.
+
+```console
+christian@pharoah:tls$ sudo rm /var/lib/samba/private/tls/*pem
+OK 01 Dec 2019 13:55:46 EST
+christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/cert.pem /var/lib/samba/private/tls/cert.pem
+OK 01 Dec 2019 13:56:03 EST
+christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/chain.pem /var/lib/samba/private/tls/chain.pem
+OK 01 Dec 2019 13:57:09 EST
+christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/privkey.pem /var/lib/samba/private/tls/privkey.pem
+OK 01 Dec 2019 13:57:13 EST
+christian@pharoah:tls$ sudo systemctl restart samba-ad-dc
+OK 01 Dec 2019 13:58:38 EST
+christian@pharoah:tls$ sudo systemctl status samba-ad-dc
+● samba-ad-dc.service - Samba AD Daemon
+   Loaded: loaded (/lib/systemd/system/samba-ad-dc.service; enabled; vendor preset: enabled)
+   Active: active (running) since Sun 2019-12-01 13:58:38 EST; 2s ago
+... trimmed ...
+OK 01 Dec 2019 13:58:40 EST
+christian@pharoah:tls$ echo -n | openssl s_client -connect 10.42.16.2:636 | sed -ne '/-END CERTIFICATE-/,/DONE/p'
+Can't use SSL_get_servername
+depth=0 CN = pharoah.funkhouse.rs
+verify error:num=20:unable to get local issuer certificate
+verify return:1
+depth=0 CN = pharoah.funkhouse.rs
+verify error:num=21:unable to verify the first certificate
+verify return:1
+DONE
+-----END CERTIFICATE-----
+subject=CN = pharoah.funkhouse.rs
+
+issuer=C = US, O = Let's Encrypt, CN = Let's Encrypt Authority X3
+
+---
+... trimmed ...
+OK 01 Dec 2019 13:58:45 EST
+```
+
+Awesome. The symlinks work. This means that now we can just install a SystemD
+timer that renews our Samba certificates, and give it a post hook to restart
+Samba for us. Certbot comes with a renewal SystemD service and timer. Looking in
+on the timer:
+
+```console
+christian@pharoah:system$ sudo systemctl list-timers certbot.timer
+NEXT                         LEFT     LAST                         PASSED       UNIT          ACTIVATES
+Mon 2019-12-02 01:34:42 EST  11h left Sun 2019-12-01 12:34:39 EST  1h 48min ago certbot.timer certbot.service
+
+1 timers listed.
+Pass --all to see loaded but inactive timers, too.
+OK 01 Dec 2019 14:23:06 EST
+```
+
+Looks fine, but we need to make sure Samba is restarted when the certificate is
+renewed. To do this, I've modified `certbot.service` to look like this:
+
+```text
+[Unit]
+Description=Certbot
+Documentation=file:///usr/share/doc/python-certbot-doc/html/index.html
+Documentation=https://letsencrypt.readthedocs.io/en/latest/
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/certbot -q renew --post-hook "systemctl restart samba-ad-dc"
+PrivateTmp=true
+```
+
+And that ought to do it.
