@@ -1,5 +1,7 @@
 ---
 title: "New Lab Infrastructure: Part 1"
+description: In which a Samba domain is configured to manage resources in my
+  home infrastructure. Part one of a long saga.
 date: 2019-11-29 13:17:32-05:00
 draft: false
 tags: ["domain controller", "home lab", "samba"]
