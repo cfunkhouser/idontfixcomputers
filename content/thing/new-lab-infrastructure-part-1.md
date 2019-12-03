@@ -726,4 +726,4 @@ provisioned for actual storage.
 
 
 _Edit: The next step is [actually a TLS configuration
-step](new-lab-infrastructure-part-1.5.md). Check it out._
+step]({{< ref "new-lab-infrastructure-part-1.5.md" >}}). Check it out._
