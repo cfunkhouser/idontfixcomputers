@@ -403,10 +403,10 @@ point.
 ### Configuring System Resolver
 
 For the DC to work correctly, it must act as its own resolver. Because of our
-existing lab DNS infrastructure, we first must make sure BIND 9 uses the existing
-DNS server as its upstream. We'll change this later, once everything else has
-been pointed at this DC. We're going to configure it as a forwarding server, in
-this case.
+existing lab DNS infrastructure, we first must make sure BIND 9 uses the
+existing DNS server as its upstream. We'll change this later, once everything
+else has been pointed at this DC. We're going to configure it as a forwarding
+server, in this case.
 
 Make `/etc/bind/named.conf.options` look like this:
 
@@ -723,3 +723,7 @@ None of this was a show-stopper.
 
 Next up: Configuring FreeNAS to work with this DC, so shares can live somewhere
 provisioned for actual storage.
+
+
+_Edit: The next step is [actually a TLS configuration
+step](new-lab-infrastructure-part-1.5.md). Check it out._
