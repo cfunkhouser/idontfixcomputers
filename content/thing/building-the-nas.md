@@ -1,5 +1,7 @@
 ---
 title: "Home-built NAS (deprecated)"
+description: In which is incompletely described the method for developing a very
+  old NAS.
 date: 2016-07-25T14:53:45-04:00
 draft: false
 tags: ["nas", "home lab"]

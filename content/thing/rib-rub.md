@@ -1,5 +1,6 @@
 ---
 title: "Christian's Rib Rub"
+description: In which a recipe is described to arrive at delicious meats.
 date: 2019-08-26T10:33:34-04:00
 draft: false
 tags: ["recipe", "meat", "smoking"]
