@@ -36,14 +36,14 @@ my DNS records. First, I need to create a role which has the permissions listed
 on the plugin page, above. I accomplished this by cloning the _DNS
 Administrator_ role and removing the things I didn't want it to do.
 
-![Creating a DNS Twiddler role in Google Cloud DNS](gcp-dns-twiddler-role.png)
+![Creating a DNS Twiddler role in Google Cloud DNS](/gcp-dns-twiddler-role.png)
 
 Now, I create a Service account which can fulfill this role for our DC, and
 assign it to the role.
 
-![Creating the Service Account](gcp-user-create-1.png)
+![Creating the Service Account](/gcp-user-create-1.png)
 
-![Assigning the Twiddler role to the new account](gcp-user-create-2.png)
+![Assigning the Twiddler role to the new account](/gcp-user-create-2.png)
 
 Finally, I created a key for this service account and downloaded the JSON file.
 This file I placed at
