@@ -204,7 +204,7 @@ That's close. The `verify error:num=20:unable to get local issuer certificate`
 error means that openssl doesn't have enough information to verify this cert.
 Instead of shipping back just the end entity certificate, we can ship back the
 whole chain using the `fullchain.pem` provided by Let's Encrypt. Make the tls
-bits `smb.conf` look like this:
+bits of `smb.conf` look like this:
 
 ```text
 tls enabled  = yes
