@@ -1,19 +1,20 @@
 ---
-title: "New Lab Infrastructure: Part 2"
-date: 2019-11-30T18:58:18-05:00
+title: "New Lab Infrastructure: Part 1.5"
+description: In which Christian remembers that self-signed certificates are a
+  bad idea, and gets Let's Encrypt working on a Samba 4 AD DC.
+date: 2019-12-02T20:58:18-05:00
 draft: false
-tags: ["domain controller", "home lab", "samba"]
+tags: ["domain controller", "home lab", "samba", "letsencrypt"]
 ---
 
-This is part two of my effort to configure new lab infrastructure. It was
-written mainly for my own reference during the process and later, when I
-inevitably need to figure out WTF I did. This part focuses on getting my FreeNAS
-authenticating against my DC, and convincing the DC to mount home directories
-and other shares from the NAS when clients join.
+This is part one-point-five of my effort to configure new lab infrastructure. It
+was written mainly for my own reference during the process and later, when I
+inevitably need to figure out WTF I did. This part preceeds my attempt to get
+FreeNAS authenticating against the DC, because it turns out having trusted certs
+is a prerequisite for that. It's best when your infrastructure trusts itself.
 
 ## Securing Things
 
-Before I get started, I need to make sure that my infrastructure trusts itself.
 To get trusted certificates, we have to do some magic with certbot and
 letsencrypt to issue certs for the various services. Luckily, there's just one
 place to set up certificates for Samba.
@@ -216,15 +217,18 @@ Awwww yeah. Looks like it worked. Now that we're sure Samba will serve traffic
 using the Let's Encrypt certificates, let's try to get it working with the
 symlinks to the certificate files so we can use automatic renewal.
 
+First, delete the certificates in their current location with `sudo rm /var/lib/samba/private/tls/*pem`
+
+Then, make the TLS section of `/etc/samba/smb.conf` look like this:
+
+```text
+tls enabled  = true
+tls keyfile  = /etc/letsencrypt/live/pharoah.funkhouse.rs/privkey.pem
+tls certfile = /etc/letsencrypt/live/pharoah.funkhouse.rs/cert.pem
+tls cafile   = /etc/letsencrypt/live/pharoah.funkhouse.rs/chain.pem
+```
+
 ```console
-christian@pharoah:tls$ sudo rm /var/lib/samba/private/tls/*pem
-OK 01 Dec 2019 13:55:46 EST
-christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/cert.pem /var/lib/samba/private/tls/cert.pem
-OK 01 Dec 2019 13:56:03 EST
-christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/chain.pem /var/lib/samba/private/tls/chain.pem
-OK 01 Dec 2019 13:57:09 EST
-christian@pharoah:~$ sudo ln -s /etc/letsencrypt/live/pharoah.funkhouse.rs/privkey.pem /var/lib/samba/private/tls/privkey.pem
-OK 01 Dec 2019 13:57:13 EST
 christian@pharoah:tls$ sudo systemctl restart samba-ad-dc
 OK 01 Dec 2019 13:58:38 EST
 christian@pharoah:tls$ sudo systemctl status samba-ad-dc
@@ -234,14 +238,7 @@ christian@pharoah:tls$ sudo systemctl status samba-ad-dc
 ... trimmed ...
 OK 01 Dec 2019 13:58:40 EST
 christian@pharoah:tls$ echo -n | openssl s_client -connect 10.42.16.2:636 | sed -ne '/-END CERTIFICATE-/,/DONE/p'
-Can't use SSL_get_servername
-depth=0 CN = pharoah.funkhouse.rs
-verify error:num=20:unable to get local issuer certificate
-verify return:1
-depth=0 CN = pharoah.funkhouse.rs
-verify error:num=21:unable to verify the first certificate
-verify return:1
-DONE
+... trimmed ...
 -----END CERTIFICATE-----
 subject=CN = pharoah.funkhouse.rs
 
