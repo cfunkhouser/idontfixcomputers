@@ -1,10 +1,10 @@
 baseURL = "http://www.idontfixcomputers.com/"
 languageCode = "en-us"
 title = "I don't fix computers."
-description = "I am Christian Funkhouser. I do code and things."
 theme = "idontthemewebsites"
 
 [params]
+description = "I am Christian Funkhouser. I do code and things."
 whoami = "Christian Funkhouser"
 
 highlight = true
