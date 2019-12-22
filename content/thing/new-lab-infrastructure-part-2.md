@@ -273,3 +273,19 @@ drwxr-xr-x  2 root  wheel   192 Dec  1 12:35 CA
 root@magpie[/etc/letsencrypt]# ls /etc/letsencrypt
 magpie-cert-renewer-credentials.json
 root@magpie[/etc/letsencrypt]#
+```
+
+```sh
+#!/bin/sh
+# Redeploy the Let's Encrypt certificates, and then restart nginx.
+# This is intended for use as a certbot post-hook.
+/root/deploy-freenas/deploy_freenas.py \
+  --config /root/deploy-freenas/deploy_config \
+&& service nginx restart
+```
+
+```sh
+certbot renew \
+  --config-dir /root/letsencrypt \
+  --post-hook /root/scripts/redeploy-nginx-certificates.sh
+```
