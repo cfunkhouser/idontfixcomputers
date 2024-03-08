@@ -1,3 +1,4 @@
 [submodule "themes/idontthemewebsites"]
 	path = themes/idontthemewebsites
 	url = git@github.com:cfunkhouser/idontthemewebsites.git
+	branch = v2
