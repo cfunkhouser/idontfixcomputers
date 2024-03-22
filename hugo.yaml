@@ -1,0 +1,19 @@
+baseURL: https://idontfixcomputers.com/
+languageCode: en-us
+title: I Don't Fix Computers
+theme: idontthemewebsites
+params:
+  slug: My name is __Christian Funkhouser__. This is my website.
+  description: Christian Funkhouser doesn't fix computers.
+taxonomies:
+  category: categories
+  theme: themes
+
+menus:
+  main:
+    - name: Code
+      url: https://github.com/cfunkhouser
+      weight: 10
+    - name: Stuff
+      pageRef: /stuff
+      weight: 20
